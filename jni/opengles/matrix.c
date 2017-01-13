@@ -74,3 +74,95 @@ void translateM(float* m, int mOffset, float x, float y, float z)
 		m[12 + mi] += m[mi] * x + m[4 + mi] * y + m[8 + mi] * z;
 	}
 }
+
+/**
+ * 获得摄像头视角矩阵
+ */
+float* setLookAtM(float* rm, int rmOffset,
+        float eyeX, float eyeY, float eyeZ,
+        float centerX, float centerY, float centerZ, float upX, float upY,
+        float upZ)
+{
+    // See the OpenGL GLUT documentation for gluLookAt for a description
+    // of the algorithm. We implement it in a straightforward way:
+	if(rm == 0)
+	{
+		rm = (float*)malloc(sizeof(float) * 16);
+	}
+    float fx = centerX - eyeX;
+    float fy = centerY - eyeY;
+    float fz = centerZ - eyeZ;
+
+    // Normalize f
+    float rlf = 1.0f / length(fx, fy, fz);
+    fx *= rlf;
+    fy *= rlf;
+    fz *= rlf;
+
+    // compute s = f x up (x means "cross product")
+    float sx = fy * upZ - fz * upY;
+    float sy = fz * upX - fx * upZ;
+    float sz = fx * upY - fy * upX;
+
+    // and normalize s
+    float rls = 1.0f / length(sx, sy, sz);
+    sx *= rls;
+    sy *= rls;
+    sz *= rls;
+
+    // compute u = s x f
+    float ux = sy * fz - sz * fy;
+    float uy = sz * fx - sx * fz;
+    float uz = sx * fy - sy * fx;
+
+    rm[rmOffset + 0] = sx;
+    rm[rmOffset + 1] = ux;
+    rm[rmOffset + 2] = -fx;
+    rm[rmOffset + 3] = 0.0f;
+
+    rm[rmOffset + 4] = sy;
+    rm[rmOffset + 5] = uy;
+    rm[rmOffset + 6] = -fy;
+    rm[rmOffset + 7] = 0.0f;
+
+    rm[rmOffset + 8] = sz;
+    rm[rmOffset + 9] = uz;
+    rm[rmOffset + 10] = -fz;
+    rm[rmOffset + 11] = 0.0f;
+
+    rm[rmOffset + 12] = 0.0f;
+    rm[rmOffset + 13] = 0.0f;
+    rm[rmOffset + 14] = 0.0f;
+    rm[rmOffset + 15] = 1.0f;
+
+    translateM(rm, rmOffset, -eyeX, -eyeY, -eyeZ);
+    return rm;
+}
+
+//求点之间长度
+float length(float x, float y, float z)
+{
+	return (float)sqrt(x * x + y * y + z * z);
+}
+
+/**
+ * 4x4矩陣相乘
+ * param left : 左子矩陣,並且最後存放結果
+ */
+void matrixMM4(float* left, float* right)
+{
+	float* tmp = (float*)malloc(sizeof(float) * 16);
+	int i,j,len;
+	for (i = 0; i < 4; ++i) {
+		for (j = 0; j < 4; ++j)
+		{
+			float t;
+			for (len = 0; len < 4; ++len) {
+				t += (left[i][len] * right[len][j]);
+			}
+			tmp[i][j] = t;
+		}
+	}
+	memcpy(left, tmp, 16 * sizeof(float));
+	free(tmp);
+}

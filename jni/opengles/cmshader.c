@@ -3,11 +3,19 @@
 
 const char* vertexShaderCode = \
 						"uniform mat4 uMVPMatrix; 					\n" \
+						"uniform mat4 uLookAtMatrix; 				\n" \
+						"uniform mat4 uTMatrix; 					\n" \
+						"uniform mat4 uRXMatrix; 					\n" \
+						"uniform mat4 uRYMatrix; 					\n" \
+						"uniform mat4 uRZMatrix; 					\n" \
 						"attribute vec3 aPosition; 					\n" \
 						"attribute vec2 aTexCoor; 					\n" \
 						"varying vec2 vTextureCoord;				\n" \
 						"void main() 								\n" \
 						"{ 											\n" \
+						"mat4 temp = uMVPMatrix; 					\n" \
+						"temp=temp*uLookAtMatrix; 					\n" \
+						"temp=temp*uTMatrix; 						\n" \
 						"gl_Position=uMVPMatrix*vec4(aPosition,1); 	\n" \
 						"vTextureCoord=aTexCoor; 					\n" \
 						"} 											\n" \
@@ -36,18 +44,44 @@ void drawFrame(GLuint program)
 		return;
 	}
 	glUseProgram(pP);
+	//获取着色器中变换矩阵的引用
+	GLint pSuMVPMatrix;
+	GLint pSuLookAtMatrix;
+	GLint pSuTMatrix;
+	GLint pSuRXMatrix;
+	GLint pSuRYMatrix;
+	GLint pSuRZMatrix;
+	pSuMVPMatrix = glGetUniformLocation(
+			pP,//GLuint program
+			"uMVPMatrix"//const GLchar *name
+			);
+	LOGI("pSuMVPMatrix = %d pP = %d", pSuMVPMatrix, pP);
+	pSuLookAtMatrix = glGetUniformLocation(
+			pP,//GLuint program
+			"uLookAtMatrix"//const GLchar *name
+			);
+	LOGI("pSuLookAtMatrix = %d pP = %d", pSuLookAtMatrix, pP);
+	pSuTMatrix = glGetUniformLocation(
+			pP,//GLuint program
+			"uTMatrix"//const GLchar *name
+			);
+	LOGI("pSuTMatrix = %d pP = %d", pSuTMatrix, pP);
+	pSuRXMatrix = glGetUniformLocation(
+			pP,//GLuint program
+			"uRXMatrix"//const GLchar *name
+			);
+	pSuRYMatrix = glGetUniformLocation(
+			pP,//GLuint program
+			"uRYMatrix"//const GLchar *name
+			);
+	pSuRZMatrix = glGetUniformLocation(
+			pP,//GLuint program
+			"uRZMatrix"//const GLchar *name
+			);
+	//初始化变换矩阵
 	GLfloat* rotateMatrix;
+	//输入总变换矩阵
 	rotateMatrix = getRotateM(0, 0, 1, 0, 0);
-	int i;
-	for(i = 0; i < 16; i++)
-	{
-		LOGI("GLFloat[%d] = %f", i, *(rotateMatrix + i));
-	}
-	translateM(rotateMatrix, 0, 8, 8, 8);
-	for(i = 0; i < 16; i++)
-	{
-		LOGI("After translate GLFloat[%d] = %f", i, *(rotateMatrix + i));
-	}
 	free(rotateMatrix);
 }
 
@@ -70,7 +104,22 @@ GLuint initShader()
 			LOGI("initShader() vertexShaderStatu = %d, CompileShader succuss!", vertexShaderStatu);
 		} else
 		{
-			LOGW("initShader() vertexShaderStatu = %d, CompileShader fail!", vertexShaderStatu);
+			GLint logLen;
+			logLen = 0;
+			glGetShaderiv(
+				pVertexShader,//GLuint shader
+				GL_INFO_LOG_LENGTH,//GLenum pname
+				&logLen
+			);
+			GLchar* pVLog = (GLchar*)malloc(sizeof(GLchar) * logLen);
+			glGetShaderInfoLog(
+				pVertexShader,//GLuint shader
+				logLen,//GLsizei maxLength
+				NULL,//GLsizei *length
+				pVLog//GLchar *infoLog
+			);
+			LOGW("initShader() vertexShaderStatu = %d, CompileShader fail! info : %s", vertexShaderStatu, pVLog);
+			free(pVLog);
 			glDeleteShader(pVertexShader);//销毁释放指针
 		}
 	} else {
@@ -97,7 +146,22 @@ GLuint initShader()
 			LOGI("initShader() fragShaderStatu = %d, CompileShader succuss!", fragShaderStatu);
 		} else
 		{
-			LOGW("initShader() fragShaderStatu = %d, CompileShader fail!", fragShaderStatu);
+			GLint logLen;
+			logLen = 0;
+			glGetShaderiv(
+				pFragShader,//GLuint shader
+				GL_INFO_LOG_LENGTH,//GLenum pname
+				&logLen
+			);
+			GLchar* pFLog = (GLchar*)malloc(sizeof(GLchar) * logLen);
+			glGetShaderInfoLog(
+				pFragShader,//GLuint shader
+				logLen,//GLsizei maxLength
+				NULL,//GLsizei *length
+				pFLog//GLchar *infoLog
+			);
+			LOGW("initShader() fragShaderStatu = %d, CompileShader fail! info : %s", fragShaderStatu, pFLog);
+			free(pFLog);
 			glDeleteShader(pFragShader);
 		}
 	} else {
