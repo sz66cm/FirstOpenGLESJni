@@ -16,7 +16,7 @@ const char* vertexShaderCode = \
 						"mat4 temp = uMVPMatrix; 					\n" \
 						"temp=temp*uLookAtMatrix; 					\n" \
 						"temp=temp*uTMatrix; 						\n" \
-						"gl_Position=uMVPMatrix*vec4(aPosition,1); 	\n" \
+						"gl_Position=temp*vec4(aPosition,1); 		\n" \
 						"vTextureCoord=aTexCoor; 					\n" \
 						"} 											\n" \
 						;
@@ -78,11 +78,30 @@ void drawFrame(GLuint program)
 			pP,//GLuint program
 			"uRZMatrix"//const GLchar *name
 			);
+	int mi;
 	//初始化变换矩阵
-	GLfloat* rotateMatrix;
+	GLfloat* mMVPMatrix;
+	GLfloat* rXMatrix;
 	//输入总变换矩阵
-	rotateMatrix = getRotateM(0, 0, 1, 0, 0);
-	free(rotateMatrix);
+	mMVPMatrix = getRotateM(0, 0, 1, 0, 0);
+	for (mi = 0; mi < 16; ++mi)
+	{
+		LOGI("mMVPMatrix[%d] = %lf", mi, mMVPMatrix[mi]);
+	}
+	//旋转X轴矩阵
+	rXMatrix = getRotateM(0, 90, 1, 0, 0);
+	for (mi = 0; mi < 16; ++mi)
+	{
+		LOGI("rXMatrix[%d] = %lf", mi, rXMatrix[mi]);
+	}
+	matrixMM4(mMVPMatrix, rXMatrix);
+	for (mi = 0; mi < 16; ++mi)
+	{
+		LOGI("After matrixMM4 mMVPMatrix[%d] = %lf", mi, mMVPMatrix[mi]);
+	}
+
+	free(mMVPMatrix);
+	free(rXMatrix);
 }
 
 //初始化着色器

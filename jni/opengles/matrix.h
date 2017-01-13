@@ -26,4 +26,4 @@ float* setLookAtM(float* rm, int rmOffset,
  * 4x4矩陣相乘
  * param left : 左子矩陣,並且最後存放結果
  */
-void matrixMM4(float* left, float right);
+void matrixMM4(float* left, float* right);

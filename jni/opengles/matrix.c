@@ -152,17 +152,22 @@ float length(float x, float y, float z)
 void matrixMM4(float* left, float* right)
 {
 	float* tmp = (float*)malloc(sizeof(float) * 16);
+	typedef int (*dyadicArray)[4];//二维数组类型定义
+	dyadicArray dLeft = (dyadicArray) left;//这样强转后,对释放是否有影响.
+	dyadicArray dRight = (dyadicArray) right;
+	dyadicArray dTmp = (dyadicArray) tmp;
+
 	int i,j,len;
 	for (i = 0; i < 4; ++i) {
 		for (j = 0; j < 4; ++j)
 		{
 			float t;
 			for (len = 0; len < 4; ++len) {
-				t += (left[i][len] * right[len][j]);
+				t += (dLeft[i][len] * dRight[len][j]);
 			}
-			tmp[i][j] = t;
+			dTmp[i][j] = t;
 		}
 	}
-	memcpy(left, tmp, 16 * sizeof(float));
+	memcpy(left, dTmp, 16 * sizeof(float));
 	free(tmp);
 }
