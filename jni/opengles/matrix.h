@@ -27,3 +27,11 @@ float* setLookAtM(float* rm, int rmOffset,
  * param left : 左子矩陣,並且最後存放結果
  */
 void matrixMM4(float* left, float* right);
+
+/**
+ * 透视矩阵
+ *
+ */
+float* frustumM(float* m, int offset,
+            float left, float right, float bottom, float top,
+            float near, float far);

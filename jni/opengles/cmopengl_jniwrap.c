@@ -24,13 +24,13 @@ JNIEXPORT jlong Java_com_cm_cmopengljni_CmOpenGL_onDrawFrame(JNIEnv* env,
 		jobject thiz, jlong ptr) {
 //	LOGI("CmOpenGL_onDrawFrame()");
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-	static int xx = 0;
-	if (xx == 0)
-	{
+//	static int xx = 0;
+//	if (xx == 0)
+//	{
 		drawFrame(0);
-		xx++;
-		LOGI("xx == 0 only one!");
-	}
+//		xx++;
+//		LOGI("xx == 0 only one!");
+//	}
 }
 
 //初始化顶点数据

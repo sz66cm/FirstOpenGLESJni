@@ -16,6 +16,7 @@
 #define GL_LINK_STATUS 35714
 #define GL_INFO_LOG_LENGTH 0x8b84
 #define GL_TRUE 1
+#define GL_FALSE 0
 
 #define GL_FLOAT 0x1406
 

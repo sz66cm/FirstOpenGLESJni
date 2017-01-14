@@ -1,6 +1,8 @@
 #include "cmshader.h"
 #include "matrix.h"
 
+#define UNIT_SIZE 0.15f
+
 const char* vertexShaderCode = \
 						"uniform mat4 uMVPMatrix; 					\n" \
 						"uniform mat4 uLookAtMatrix; 				\n" \
@@ -13,10 +15,7 @@ const char* vertexShaderCode = \
 						"varying vec2 vTextureCoord;				\n" \
 						"void main() 								\n" \
 						"{ 											\n" \
-						"mat4 temp = uMVPMatrix; 					\n" \
-						"temp=temp*uLookAtMatrix; 					\n" \
-						"temp=temp*uTMatrix; 						\n" \
-						"gl_Position=temp*vec4(aPosition,1); 		\n" \
+						"gl_Position=uMVPMatrix*vec4(aPosition,1); 		\n" \
 						"vTextureCoord=aTexCoor; 					\n" \
 						"} 											\n" \
 						;
@@ -29,6 +28,13 @@ const char* fragShaderCode = \
 		"gl_FragColor=texture2D(sTexture,vTextureCoord);	\n" \
 		"}													\n" \
 		;
+
+const float vertices[] =
+{
+	0 * UNIT_SIZE, 11 * UNIT_SIZE, 0,
+	-11 * UNIT_SIZE, -11 * UNIT_SIZE, 0,
+	11 * UNIT_SIZE, -11 * UNIT_SIZE, 0
+};
 
 //渲染
 void drawFrame(GLuint program)
@@ -45,63 +51,63 @@ void drawFrame(GLuint program)
 	}
 	glUseProgram(pP);
 	//获取着色器中变换矩阵的引用
-	GLint pSuMVPMatrix;
-	GLint pSuLookAtMatrix;
-	GLint pSuTMatrix;
-	GLint pSuRXMatrix;
-	GLint pSuRYMatrix;
-	GLint pSuRZMatrix;
-	pSuMVPMatrix = glGetUniformLocation(
+	GLfloat* mMVPMatrix = setLookAtM(NULL, 0,
+			0,0,3,//eye
+			0,0,0,//camera
+			0,1,0//up
+			);
+	//投影矩阵
+	float radio = 720.0f / 1280.0f;
+	GLfloat* mProjectMatrix = frustumM(NULL, 0,
+			-radio, radio, //left right
+			-1, 1,//bottom top
+			1, 10//near far
+			);
+	//向Z轴前移一个单位
+	translateM(mMVPMatrix, 0, 0, 0, 1);
+	//获取着色器总变换矩阵引用
+	GLint muMVPMatrixHandle = glGetUniformLocation(
 			pP,//GLuint program
 			"uMVPMatrix"//const GLchar *name
-			);
-	LOGI("pSuMVPMatrix = %d pP = %d", pSuMVPMatrix, pP);
-	pSuLookAtMatrix = glGetUniformLocation(
-			pP,//GLuint program
-			"uLookAtMatrix"//const GLchar *name
-			);
-	LOGI("pSuLookAtMatrix = %d pP = %d", pSuLookAtMatrix, pP);
-	pSuTMatrix = glGetUniformLocation(
-			pP,//GLuint program
-			"uTMatrix"//const GLchar *name
-			);
-	LOGI("pSuTMatrix = %d pP = %d", pSuTMatrix, pP);
-	pSuRXMatrix = glGetUniformLocation(
-			pP,//GLuint program
-			"uRXMatrix"//const GLchar *name
-			);
-	pSuRYMatrix = glGetUniformLocation(
-			pP,//GLuint program
-			"uRYMatrix"//const GLchar *name
-			);
-	pSuRZMatrix = glGetUniformLocation(
-			pP,//GLuint program
-			"uRZMatrix"//const GLchar *name
-			);
-	int mi;
-	//初始化变换矩阵
-	GLfloat* mMVPMatrix;
-	GLfloat* rXMatrix;
-	//输入总变换矩阵
-	mMVPMatrix = getRotateM(0, 0, 1, 0, 0);
-	for (mi = 0; mi < 16; ++mi)
-	{
-		LOGI("mMVPMatrix[%d] = %lf", mi, mMVPMatrix[mi]);
-	}
-	//旋转X轴矩阵
-	rXMatrix = getRotateM(0, 90, 1, 0, 0);
-	for (mi = 0; mi < 16; ++mi)
-	{
-		LOGI("rXMatrix[%d] = %lf", mi, rXMatrix[mi]);
-	}
-	matrixMM4(mMVPMatrix, rXMatrix);
-	for (mi = 0; mi < 16; ++mi)
-	{
-		LOGI("After matrixMM4 mMVPMatrix[%d] = %lf", mi, mMVPMatrix[mi]);
-	}
+	);
+	//矩阵整合
+	matrixMM4(mMVPMatrix, mProjectMatrix);
+	//将总变换矩阵传输到着色器
+	glUniformMatrix4fv(
+			muMVPMatrixHandle,//GLint location
+			1,//GLsizei count
+			GL_FALSE,//GLboolean transpose
+			mMVPMatrix//const GLfloat *value
+	);
+	LOGI("glUniformMatrix4fv - end");
+	//获取着色器中顶点属性引用
+	GLint pVertexAttribHandle = glGetAttribLocation(
+			pP,//	GLuint program
+			"aPosition"//  const GLchar *name
+	);
+	LOGI("pVertexAttribHandle : %d", pVertexAttribHandle);
+	//为着色器指定顶点数据
+	glVertexAttribPointer(
+			pVertexAttribHandle,//GLuint index
+			3,//GLint size X Y Z
+			GL_FLOAT,//GLenum type
+			GL_FALSE,//GLboolean normalized
+			3 * 4,//GLsizei stride
+			vertices//const GLvoid * pointer
+	);
+	//允许顶点位置数据数组
+	glEnableVertexAttribArray(pVertexAttribHandle);
 
+	//绘制三角形
+	glDrawArrays(
+			GL_TRIANGLES,//GLenum mode
+			0,//GLint first index
+			3//GLsizei counts
+	);
+	LOGI("glDrawArrays - end");
+	//释放内存
+	free(mProjectMatrix);
 	free(mMVPMatrix);
-	free(rXMatrix);
 }
 
 //初始化着色器

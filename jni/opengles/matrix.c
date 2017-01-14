@@ -1,4 +1,5 @@
 #include "matrix.h"
+#include "cmshader.h"
 
 /**
  * 用于实现矩阵初始化,变换相关函数.
@@ -152,10 +153,10 @@ float length(float x, float y, float z)
 void matrixMM4(float* left, float* right)
 {
 	float* tmp = (float*)malloc(sizeof(float) * 16);
-	typedef float (*dyadicArray)[4];//二维数组类型定义
-	dyadicArray dLeft = (dyadicArray) left;//这样强转后,对释放是否有影响.
-	dyadicArray dRight = (dyadicArray) right;
-	dyadicArray dTmp = (dyadicArray) tmp;
+	typedef float (*DyadicArray)[4];//二维数组类型定义
+	DyadicArray dLeft = (DyadicArray) left;//这样强转后,对释放是否有影响.
+	DyadicArray dRight = (DyadicArray) right;
+	DyadicArray dTmp = (DyadicArray) tmp;
 
 	int i,j,len;
 	for (i = 0; i < 4; ++i) {
@@ -171,3 +172,66 @@ void matrixMM4(float* left, float* right)
 	memcpy(left, dTmp, 16 * sizeof(float));
 	free(tmp);
 }
+
+/**
+     * Defines a projection matrix in terms of six clip planes.
+     *
+     * @param m the float array that holds the output perspective matrix
+     * @param offset the offset into float array m where the perspective
+     *        matrix data is written
+     * @param left
+     * @param right
+     * @param bottom
+     * @param top
+     * @param near
+     * @param far
+     */
+    float* frustumM(float* m, int offset,
+            float left, float right, float bottom, float top,
+            float near, float far) {
+    	if(NULL == m)
+    	{
+    		m = (float*)malloc(sizeof(float) * 16);
+    	}
+        if (left == right) {
+        	LOGW("frustumM() left == right!!!");
+        }
+        if (top == bottom) {
+        	LOGW("frustumM() top == bottom!!!");
+        }
+        if (near == far) {
+        	LOGW("frustumM() near == far!!!");
+        }
+        if (near <= 0.0f) {
+        	LOGW("frustumM() near <= 0.0f!!!");
+        }
+        if (far <= 0.0f) {
+        	LOGW("frustumM() far <= 0.0f!!!");
+        }
+        float r_width  = 1.0f / (right - left);
+        float r_height = 1.0f / (top - bottom);
+        float r_depth  = 1.0f / (near - far);
+        float x = 2.0f * (near * r_width);
+        float y = 2.0f * (near * r_height);
+        float A = (right + left) * r_width;
+        float B = (top + bottom) * r_height;
+        float C = (far + near) * r_depth;
+        float D = 2.0f * (far * near * r_depth);
+        m[offset + 0] = x;
+        m[offset + 5] = y;
+        m[offset + 8] = A;
+        m[offset +  9] = B;
+        m[offset + 10] = C;
+        m[offset + 14] = D;
+        m[offset + 11] = -1.0f;
+        m[offset +  1] = 0.0f;
+        m[offset +  2] = 0.0f;
+        m[offset +  3] = 0.0f;
+        m[offset +  4] = 0.0f;
+        m[offset +  6] = 0.0f;
+        m[offset +  7] = 0.0f;
+        m[offset + 12] = 0.0f;
+        m[offset + 13] = 0.0f;
+        m[offset + 15] = 0.0f;
+        return m;
+    }
