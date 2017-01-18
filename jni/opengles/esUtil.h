@@ -13,6 +13,15 @@
 #define LOGI_EU(...) __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 #define LOGW_EU(...) __android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
 
+typedef struct Instance
+{
+  char* buffer;
+  GLuint texture;
+  GLuint pProgram;
+  unsigned int width;
+  unsigned int height;
+} Instance;
+
 /**
  * 初始化着色器
  */

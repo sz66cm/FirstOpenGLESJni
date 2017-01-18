@@ -5,6 +5,10 @@
 #include <string.h>
 #define PI 3.14159265f
 
+#define LOG_TAG_MATRIX "matrix"
+#define LOGI_MATRIX(...) __android_log_print(ANDROID_LOG_INFO,LOG_TAG_MATRIX,__VA_ARGS__)
+#define LOGW_MATRIX(...) __android_log_print(ANDROID_LOG_WARN,LOG_TAG_MATRIX,__VA_ARGS__)
+
 
 void
 printArray(char* name, float* rm);

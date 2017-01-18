@@ -18,15 +18,7 @@ const char* vertexShaderCode = "uniform mat4 uMVPMatrix; 	\n"\
     "gl_Position=uMVPMatrix*vec4(aPosition,1); 			\n"\
     "vTextureCoord=aTexCoor; 					\n"\
     "} 								\n";
-const char* vertexShaderCode2 = "uniform mat4 uMVPMatrix; 	\n"\
-    "attribute vec3 aPosition; 					\n"\
-    "attribute vec4 aColor; 					\n"\
-    "varying vec4 vColor;					\n"\
-    "void main() 						\n"\
-    "{ 								\n"\
-    "gl_Position=uMVPMatrix * vec4(aPosition,1);		\n"\
-    "vColor = aColor; 						\n"\
-    "} 								\n";
+
 const char* fragShaderCode = "precision mediump float;		\n"\
     "varying vec2 vTextureCoord;				\n"\
     "uniform sampler2D sTexture;				\n"\
@@ -34,12 +26,7 @@ const char* fragShaderCode = "precision mediump float;		\n"\
     "{								\n"\
     "gl_FragColor=texture2D(sTexture,vTextureCoord);		\n"\
     "}								\n";
-const char* fragShaderCode2 = "precision mediump float;		\n"\
-    "varying vec4 vColor;					\n"\
-    "void main()						\n"\
-    "{								\n"\
-    "	gl_FragColor = vColor;					\n"\
-    "}								\n";
+
 
 const float vertices[] =
   { 0 * UNIT_SIZE, 11 * UNIT_SIZE, 0, -11 * UNIT_SIZE, -11 * UNIT_SIZE, 0, 11
@@ -56,21 +43,16 @@ const float colors2[] =
 
 //渲染
 void
-drawFrame (GLuint program)
+drawFrame (void* instance)
 {
+  Instance *ins;
+  ins = (Instance *)instance;
   GLuint pP;
-  pP = program;
+  pP = ins->pProgram;
   if (pP == 0)
     {
-      GLint shaders[2] = {0};
-      shaders[0] = initShader(vertexShaderCode2, GL_VERTEX_SHADER);
-      shaders[1] = initShader(fragShaderCode2, GL_FRAGMENT_SHADER);
-      pP = initProgram(shaders, 2);
-      if (pP == 0)
-	{
-	  LOGI("drawFrame() pP init fail! return");
-	  return;
-	}
+      LOGI("drawFrame() pP init fail! return");
+      return;
     }
   glUseProgram (pP);
   //初始化变换矩阵
@@ -80,19 +62,17 @@ drawFrame (GLuint program)
   GLfloat* mRXMatrix;
   GLfloat* mRZMatrix;
   muMVPMatrix = getRotateM(NULL, 0, 0, 1, 0, 0);
-  printArray("m1", muMVPMatrix);
   //设置沿Z轴正向移动1
   translateM(muMVPMatrix, 0, 0, 0, 1);
-  printArray("mT", muMVPMatrix);
   //设置透视投影矩阵
-  float radio = 720.0f / 1134.0f;
+  float radio = (float)ins->width / (float)ins->height;
+//  float radio = 720.0f / 1134.0f;
   mProjMatrix = frustumM (NULL,//GLfloat* m
 			  0,//offset
 			  -radio, radio,//Left, Right
 			  -1, 1,// bottom, top
 			  1, 10//near, far
   );
-  printArray("mPM", mProjMatrix);
   //设置观察矩阵
   mLookAtMatrix = setLookAtM (NULL,
 			      0,
@@ -100,7 +80,6 @@ drawFrame (GLuint program)
 			      0, 0, 0,//targetX, targetY, targetZ
 			      0, 1, 0//upX, upY, upZ
   );
-  printArray("mVM", mLookAtMatrix);
   //绕X轴旋转
   GLfloat xAngle = 0;
   mRXMatrix = getRotateM(NULL, 0, xAngle, 1, 0, 0);

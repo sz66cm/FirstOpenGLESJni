@@ -1,6 +1,6 @@
 #include "matrix.h"
-#include "cmshader.h"
 #include <stdio.h>
+#include "esUtil.h"
 
 /**
  * 用于实现矩阵初始化,变换相关函数.
@@ -97,7 +97,7 @@ translateM (float* m, int mOffset, float x, float y, float z)
 {
   if(m == NULL)
     {
-      LOGW("translateM() matrix is NULL than do nothing!");
+      LOGW_MATRIX("translateM() matrix is NULL than do nothing!");
       return;
     }
   int i;
@@ -235,23 +235,23 @@ frustumM (float* m, int offset, float left, float right, float bottom,
     }
   if (left == right)
     {
-      LOGW("frustumM() left == right!!!");
+      LOGW_MATRIX("frustumM() left == right!!!");
     }
   if (top == bottom)
     {
-      LOGW("frustumM() top == bottom!!!");
+      LOGW_MATRIX("frustumM() top == bottom!!!");
     }
   if (near == far)
     {
-      LOGW("frustumM() near == far!!!");
+      LOGW_MATRIX("frustumM() near == far!!!");
     }
   if (near <= 0.0f)
     {
-      LOGW("frustumM() near <= 0.0f!!! near = %lf", near);
+      LOGW_MATRIX("frustumM() near <= 0.0f!!! near = %lf", near);
     }
   if (far <= 0.0f)
     {
-      LOGW("frustumM() far <= 0.0f!!! far = %lf", far);
+      LOGW_MATRIX("frustumM() far <= 0.0f!!! far = %lf", far);
     }
   float r_width = 1.0f / (right - left);
   float r_height = 1.0f / (top - bottom);
@@ -287,5 +287,5 @@ void printArray(char* name, float* rm){
     for (i = 0; i < 16; ++i) {
       sprintf(str + strlen(str), "%s[%d] = %g,", name, i, rm[i]);
     }
-    LOGI("%s = %s", name, str);
+    LOGI_MATRIX("%s = %s", name, str);
   }
