@@ -1,5 +1,6 @@
-#include "cmshader.h"
 #include <stdio.h>
+#include "cmshader.h"
+#include "esUtil.h"
 
 #define UNIT_SIZE 0.15f
 
@@ -61,13 +62,15 @@ drawFrame (GLuint program)
   pP = program;
   if (pP == 0)
     {
-      pP = initShader ();
-      LOGI("drawFrame() program initShader!");
-    }
-  if (pP == 0)
-    {
-      LOGW("drawFrame() program is NULL return!");
-      return;
+      GLint shaders[2] = {0};
+      shaders[0] = initShader(vertexShaderCode2, GL_VERTEX_SHADER);
+      shaders[1] = initShader(fragShaderCode2, GL_FRAGMENT_SHADER);
+      pP = initProgram(shaders, 2);
+      if (pP == 0)
+	{
+	  LOGI("drawFrame() pP init fail! return");
+	  return;
+	}
     }
   glUseProgram (pP);
   //初始化变换矩阵
@@ -116,7 +119,6 @@ drawFrame (GLuint program)
   muMVPMatrixHandle = glGetUniformLocation(pP, "uMVPMatrix");
   //	2.输入变换矩阵数据
   glUniformMatrix4fv(muMVPMatrixHandle, 1, GL_FALSE, muMVPMatrix);
-
   //	3.释放
   free(mRXMatrix);
   free(mRZMatrix);
@@ -155,148 +157,4 @@ drawFrame (GLuint program)
 		0,//GLint first,
 		6//GLsizei count
   );
-}
-
-//初始化着色器
-GLuint
-initShader ()
-{
-  //顶点着色器初始化
-  GLuint pVertexShader = glCreateShader (GL_VERTEX_SHADER);
-  if (pVertexShader != 0)
-    {	//若创建成功,就加载shader
-	//加载shader的源代码
-      glShaderSource (pVertexShader, 1, &vertexShaderCode2, NULL);
-      //编译shader
-      glCompileShader (pVertexShader);
-      //获取Shader编译情况
-      GLint vertexShaderStatu = -1;
-      glGetShaderiv (pVertexShader, GL_COMPILE_STATUS, &vertexShaderStatu);
-      if (vertexShaderStatu != 0)
-	{
-	  LOGI("initShader() vertexShaderStatu = %d, CompileShader succuss!",
-	       vertexShaderStatu);
-	}
-      else
-	{
-	  GLint logLen;
-	  logLen = 0;
-	  glGetShaderiv (pVertexShader,		//GLuint shader
-	      GL_INFO_LOG_LENGTH,		//GLenum pname
-	      &logLen);
-	  GLchar* pVLog = (GLchar*) malloc (sizeof(GLchar) * logLen);
-	  glGetShaderInfoLog (pVertexShader,		//GLuint shader
-	      logLen,		//GLsizei maxLength
-	      NULL,		//GLsizei *length
-	      pVLog		//GLchar *infoLog
-	      );
-	  LOGW(
-	      "initShader() vertexShaderStatu = %d, CompileShader fail! info : %s",
-	      vertexShaderStatu, pVLog);
-	  free (pVLog);
-	  glDeleteShader (pVertexShader);		//销毁释放指针
-	}
-    }
-  else
-    {
-      LOGW("initShader() pVertexShader glCreateShader(GL_VERTEX_SHADER) fail!");
-    }
-
-  //片元着色器初始化
-  GLuint pFragShader = glCreateShader (GL_FRAGMENT_SHADER);
-  if (pFragShader != 0)
-    {		//片元著色器指針創建成功
-		//加載shader的源代碼
-      glShaderSource (pFragShader, 1, &fragShaderCode2, NULL);
-      //編譯shader
-      glCompileShader (pFragShader);
-      //獲取著色器編譯情況
-      GLint fragShaderStatu = -1;
-      glGetShaderiv (pFragShader,		//GLuint shader
-	  GL_COMPILE_STATUS,		//GLenum pname
-	  &fragShaderStatu		//GLint *params
-	  );
-      if (fragShaderStatu != 0)
-	{
-	  LOGI("initShader() fragShaderStatu = %d, CompileShader succuss!",
-	       fragShaderStatu);
-	}
-      else
-	{
-	  GLint logLen;
-	  logLen = 0;
-	  glGetShaderiv (pFragShader,		//GLuint shader
-	      GL_INFO_LOG_LENGTH,		//GLenum pname
-	      &logLen);
-	  GLchar* pFLog = (GLchar*) malloc (sizeof(GLchar) * logLen);
-	  glGetShaderInfoLog (pFragShader,		//GLuint shader
-	      logLen,		//GLsizei maxLength
-	      NULL,		//GLsizei *length
-	      pFLog		//GLchar *infoLog
-	      );
-	  LOGW(
-	      "initShader() fragShaderStatu = %d, CompileShader fail! info : %s",
-	      fragShaderStatu, pFLog);
-	  free (pFLog);
-	  glDeleteShader (pFragShader);
-	}
-    }
-  else
-    {
-      LOGW("initShader() pFragShader glCreateShader(GL_FRAGMENT_SHADER) fail!");
-    }
-
-  //創建程序
-  GLuint pProgram = glCreateProgram ();
-  if (pProgram != 0)
-    {
-      //向程序中加入頂點著色器
-      glAttachShader (pProgram, pVertexShader);
-      GLint error = glGetError ();
-      if (GL_NO_ERROR != error)
-	{
-	  LOGW("initShader() AttachShader(pVertexShader) error!");
-	}
-      //向程序中加入片元着色器
-      glAttachShader (pProgram, pFragShader);
-      error = glGetError ();
-      if (GL_NO_ERROR != error)
-	{
-	  LOGW("initShader() AttachShader(pFragShader) error!");
-	}
-      //链接程序
-      glLinkProgram (pProgram);
-      //获取链接成功program
-      GLint linkProgramStatu = 0;
-      glGetProgramiv (pProgram,		//GLuint program
-	  GL_LINK_STATUS,		//GLenum pname
-	  &linkProgramStatu		//GLint *params
-	  );
-      if (linkProgramStatu != GL_TRUE)
-	{
-	  GLint logLen;		//存储Log的长度
-	  glGetProgramiv (pProgram,		//GLuint program
-	      GL_INFO_LOG_LENGTH,		//GLenum pname
-	      &logLen		//GLint *params
-	      );
-	  GLchar* logStr = (GLchar*) malloc (sizeof(GLchar) * logLen);
-	  glGetProgramInfoLog (pProgram,		//GLuint program
-	      logLen,		//GLsizei maxLength
-	      NULL,		//GLsizei *length
-	      logStr		//GLchar *infoLog
-	      );
-	  LOGW("initShader() glLinkProgram fail! info : %s", logStr);
-	  glDeleteProgram (pProgram);
-	  free (logStr);
-	}
-      else
-	{
-	  LOGI("initShader() glLinkProgram success!");
-	}
-    }
-  else
-    {
-      LOGW("initShader() pProgram glCreateProgram() fail!");
-    }
-  return pProgram;
 }
